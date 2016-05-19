@@ -7,7 +7,7 @@ foreach ($eachVM in $FullVM) {
     $eachVM.Summary.Config.VmPathName -match '^\[([^\]]+)\] ([^/]+)' > $null
     $Datastore = $matches[1]
     $VMPath = $matches[2]
-    $DC = Get-Datacenter -VM $eachVM.Name
+    $DC = Get-Datacenter -VM (get-vm -Id $eachVM.moref)
     if ($DC.ParentFolder.Parent) { #Check if Datacenter has a parent folder
       $DCPath = $DC.ParentFolder.Name
     }
@@ -15,9 +15,9 @@ foreach ($eachVM in $FullVM) {
       $DCPath = ''
     }
     $gciloc = (Get-ChildItem vmstores: | Select -first 1).Name
-    $fileList = Get-ChildItem "vmstores:\$gciloc\$DCPath\$DC\$Datastore\$VMPath"
+    $fileList = Get-ChildItem "vmstores:\$gciloc\$DCPath\$DC\$Datastore\$VMPath" -Exclude *.log
     foreach ($file in $fileList) {
-      if ($file.Name -like '*delta.vmdk*' -or $file -like '-*-flat.vmdk') { 
+      if ($file.Name -match '-delta\.vmdk|-flat\.vmdk') {
         $Details = "" | Select-Object VM, Datacenter, Path
         $Details.VM = $eachVM.Name
         $Details.Datacenter = $DC.Name
